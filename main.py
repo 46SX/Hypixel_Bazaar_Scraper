@@ -19,8 +19,9 @@ def update_data():
             data_ready.set()
             for item_name in data.keys():
                 log_item(conn, item_name, data)
-        
-        notify("Succesful Update", title="Scraper", priority="low", tags="Bazaar")
+            notify("Succesful Update", title="Scraper", priority="low", tags="Bazaar")
+        else:
+            notify("Failed to fetch data!", title="Scraper", priority="high", tags="Warning")
         
         time.sleep(300)
 
@@ -28,5 +29,5 @@ dataupdate_thread = threading.Thread(target=update_data)
 dataupdate_thread.daemon = True
 dataupdate_thread.start()
 
-data_ready.wait()  # Vänta tills första datan är hämtad
+data_ready.wait() 
 print("Kör! Loggar data var 5:e minut...")
