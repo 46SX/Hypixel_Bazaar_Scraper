@@ -2,9 +2,13 @@ from scraper import *
 from utils import *
 import threading
 import time
+import os
 
+
+path = os.path.expanduser("~/data/bazaar")
+
+# Data Updater
 data = {}
-
 def update_data():
     while True:
         global data
@@ -14,19 +18,11 @@ dataupdate_thread = threading.Thread(target=update_data)
 dataupdate_thread.daemon = True
 dataupdate_thread.start()
 
-while not data:
-    time.sleep(0.1)
+if not os.path.exists(path):
+    os.makedirs(path, exist_ok=True)
+conn = make
+    
 
-databefore = None
-
-while data:
-
-    item = get_item_data("ENCHANTED_MUTTON", data[0])
-
-    if item != databefore: 
-        print(item)
-        databefore = item
-        
     
 
 
