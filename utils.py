@@ -60,31 +60,48 @@ def create_db(path=os.path.expanduser("~/data/scraper/bazaar")):
     if not already_exists:
         conn.execute("""
             CREATE TABLE prices (
-                id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp       INTEGER,
-                item            TEXT,
-                buy_price       REAL,
-                sell_price      REAL,
-                profit_margin   REAL,
-                profit_percent  REAL,
-                spread_percent  REAL,
-                buy_to_sell     REAL,
-                order_density   REAL,
-                avg_sell_price  REAL,
-                avg_buy_price   REAL
+                id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp               INTEGER,
+                item                    TEXT,
+                buy_price               REAL,
+                sell_price              REAL,
+                profit_margin           REAL,
+                profit_percent          REAL,
+                spread_percent          REAL,
+                buy_to_sell             REAL,
+                order_density           REAL,
+                avg_sell_price          REAL,
+                avg_buy_price           REAL,
+                volume_of_buyorders     REAL,
+                volume_of_sellorders    REAL,
+                avg_sold_per_day        REAL,
+                avg_bought_per_day      REAL
             )
         """)
         conn.commit()
         print("Databas skapad!")
     else:
         print("Databas hittad, ansluter...")
+        # Migrera befintlig databas
+        existing = [row[1] for row in conn.execute("PRAGMA table_info(prices)")]
+        new_cols = {
+            "volume_of_buyorders":  "REAL",
+            "volume_of_sellorders": "REAL",
+            "avg_sold_per_day":     "REAL",
+            "avg_bought_per_day":   "REAL"
+        }
+        for col, typ in new_cols.items():
+            if col not in existing:
+                conn.execute(f"ALTER TABLE prices ADD COLUMN {col} {typ}")
+                print(f"Kolumn tillagd: {col}")
+        conn.commit()
     
     return conn
 
 def log_item(conn, item_name, data):
     item = get_item_data(item_name, data)
     conn.execute("""
-        INSERT INTO prices VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO prices VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         int(time.time()),
         item_name,
@@ -96,6 +113,10 @@ def log_item(conn, item_name, data):
         item["buy_to_sell_ratio"],
         item["order_density"],
         item["average_sell_price"],
-        item["average_buy_price"]
+        item["average_buy_price"],
+        item["volume_of_buyorders"],
+        item["volume_of_sellorders"],
+        item["average_sold_each_day"],
+        item["average_bought_each_day"]
     ))
     conn.commit()
