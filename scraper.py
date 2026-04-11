@@ -1,6 +1,6 @@
 import requests
 from requests.exceptions import *
-
+from json import JSONDecodeError
 
 def handle_error(e):
     if isinstance(e, requests.exceptions.RequestException):
