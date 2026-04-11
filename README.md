@@ -1,20 +1,15 @@
 # Hypixel Bazaar Scraper
-
 A real-time data scraper and logger for the Hypixel Skyblock Bazaar. Fetches live price data from the official Hypixel API and stores it in a local SQLite database for trend analysis.
-
 ---
 ## Features
-
 - Fetches live bazaar data from the Hypixel API every 5 minutes
-- Stores historical price data in SQLite
+- Stores historical price data in SQLite (WAL mode for concurrent reads)
 - Push notifications via ntfy
 - Tracks all bazaar items automatically
+- Order book depth analysis within 1% of top bid/ask
 - No API key required — the Bazaar endpoint is public
-
 ---
-
 ## Data Collected Per Item
-
 | Field | Description |
 |---|---|
 | `buy_price` | Highest buy order (instant sell price) |
@@ -28,41 +23,34 @@ A real-time data scraper and logger for the Hypixel Skyblock Bazaar. Fetches liv
 | `average_bought_each_day` | Items bought per day (based on weekly moving data) |
 | `order_density` | Total market activity (buy + sell orders) |
 | `buy_to_sell_ratio` | Demand vs supply ratio |
-
+| `buy_order_count` | Number of active buy orders |
+| `sell_order_count` | Number of active sell orders |
+| `buy_depth_1pct` | Total coin value of buy orders within 1% of top bid |
+| `sell_depth_1pct` | Total coin value of sell offers within 1% of top ask |
+| `book_imbalance` | Buy depth / sell depth — above 1.0 = buying pressure |
 ---
-
 ## Getting Started
-
 ### Requirements
 - Python 3.12
 - ntfy server (optional, for notifications)
-
 ### 1. Install dependencies
 ```bash
 pip install requests python-dotenv
 ```
-
 ### 2. Create your `.env` file
-
 ```
 NTFY_URL=http://your-ntfy-server/BazaarTracker
 ```
-
 Data is saved to `~/data/scraper/bazaar/bazaar.db` automatically.
-
 ---
 ## API
-
 Uses the official Hypixel Public API v2:
 ```
 https://api.hypixel.net/v2/skyblock/bazaar
 ```
 No API key required. Scrapes every 5 minutes to stay well within rate limits.
-
 ---
-
 ## Project Structure
-
 ```
 HypixelBazaarChecker/
 ├── main.py          # Entry point, threading, main loop
@@ -71,15 +59,11 @@ HypixelBazaarChecker/
 ├── notis.py         # ntfy push notifications
 └── .env             # Not committed — add your own
 ```
-
 ---
 ## Built With
-
 - Python 3.12
 - SQLite3
 - ntfy
-
 ---
 ## License
-
 MIT
