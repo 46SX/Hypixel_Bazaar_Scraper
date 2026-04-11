@@ -8,11 +8,11 @@ def get_item_data(item, data):
     sell_sum = item_data["sell_summary"]
     buy_sum = item_data["buy_summary"]
 
-    def safe_calc(func):
+    def safe_calc(func, field="unknown", item="unknown"):
         try: return func()
         except Exception as e:
-            print(f"safe_calc error: {e}", flush=True) 
-            return "Error"
+            print(f"safe_calc error [{item}] [{field}]: {e}", flush=True) 
+            return 0
 
     def average(sum_data):
         total_cost = sum(listing["pricePerUnit"] * listing["amount"] for listing in sum_data)
