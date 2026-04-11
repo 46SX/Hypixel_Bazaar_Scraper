@@ -1,4 +1,3 @@
-from scraper import get_data
 import sqlite3
 import time
 import os
@@ -11,7 +10,9 @@ def get_item_data(item, data):
 
     def safe_calc(func):
         try: return func()
-        except: return "Error"
+        except Exception as e:
+            print(f"safe_calc error: {e}", flush=True) 
+            return "Error"
 
     def average(sum_data):
         total_cost = sum(listing["pricePerUnit"] * listing["amount"] for listing in sum_data)
