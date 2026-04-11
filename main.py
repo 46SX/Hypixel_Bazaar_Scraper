@@ -18,8 +18,12 @@ def update_data():
                 data, last_updated = result
                 data_ready.set()
                 for item_name in data.keys():
-                    log_item(conn, item_name, data)
-                notify("Succesful Update", title="Scraper", priority="low", tags="Bazaar")
+                    try:
+                        log_item(conn, item_name, data)
+                    except Exception as e:
+                        print(f"Failed to log {item_name}: {e}", flush=True)
+                conn.commit()
+                notify("Successful Update", title="Scraper", priority="low", tags="Bazaar")
             else:
                 notify("Failed to fetch data!", title="Scraper", priority="high", tags="warning")
         except Exception as e:
