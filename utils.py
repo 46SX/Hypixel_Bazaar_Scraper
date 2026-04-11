@@ -26,6 +26,20 @@ def get_item_data(item, data):
         total_amount = sum(l["amount"] for l in summary)
         return total_cost / total_amount if total_amount > 0 else None
 
+    def depth_within_pct(summary, top_price, pct, side="buy"):
+        if not summary or not top_price or top_price <= 0:
+            return None
+        total = 0
+        for level in summary:
+            price = level["pricePerUnit"]
+            if side == "buy":
+                if price >= top_price * (1 - pct / 100):
+                    total += price * level["amount"]
+            else:
+                if price <= top_price * (1 + pct / 100):
+                    total += price * level["amount"]
+        return total if total > 0 else None
+
     buy_price = quick["buyPrice"]
     sell_price = quick["sellPrice"]
 
@@ -54,11 +68,6 @@ def get_item_data(item, data):
         "buy_to_sell_ratio"
     )
 
-    order_density = safe(
-        lambda: quick["buyOrders"] + quick["sellOrders"],
-        "order_density"
-    )
-
     avg_sold_per_day = safe(
         lambda: round(quick["sellMovingWeek"] / 7, 2),
         "avg_sold_per_day"
@@ -67,6 +76,22 @@ def get_item_data(item, data):
     avg_bought_per_day = safe(
         lambda: round(quick["buyMovingWeek"] / 7, 2),
         "avg_bought_per_day"
+    )
+
+    buy_depth_1pct = safe(
+        lambda: depth_within_pct(buy_summary, buy_price, 1, "buy"),
+        "buy_depth_1pct"
+    )
+
+    sell_depth_1pct = safe(
+        lambda: depth_within_pct(sell_summary, sell_price, 1, "sell"),
+        "sell_depth_1pct"
+    )
+
+    book_imbalance = safe(
+        lambda: round(buy_depth_1pct / sell_depth_1pct, 3)
+        if buy_depth_1pct and sell_depth_1pct and sell_depth_1pct > 0 else None,
+        "book_imbalance"
     )
 
     return {
@@ -80,9 +105,14 @@ def get_item_data(item, data):
         "average_buy_price":       avg_buy,
         "average_sold_each_day":   avg_sold_per_day,
         "average_bought_each_day": avg_bought_per_day,
-        "order_density":           order_density,
+        "order_density":           quick["buyOrders"] + quick["sellOrders"],
         "spread_percent":          spread_percent,
         "buy_to_sell_ratio":       buy_to_sell_ratio,
+        "buy_order_count":         quick["buyOrders"],
+        "sell_order_count":        quick["sellOrders"],
+        "buy_depth_1pct":          buy_depth_1pct,
+        "sell_depth_1pct":         sell_depth_1pct,
+        "book_imbalance":          book_imbalance,
     }
 
 
@@ -112,7 +142,12 @@ def create_db(path=DB_PATH):
                 volume_of_buyorders     REAL,
                 volume_of_sellorders    REAL,
                 avg_sold_per_day        REAL,
-                avg_bought_per_day      REAL
+                avg_bought_per_day      REAL,
+                buy_order_count         INTEGER,
+                sell_order_count        INTEGER,
+                buy_depth_1pct          REAL,
+                sell_depth_1pct         REAL,
+                book_imbalance          REAL
             )
         """)
         conn.commit()
@@ -125,6 +160,11 @@ def create_db(path=DB_PATH):
             "volume_of_sellorders": "REAL",
             "avg_sold_per_day":     "REAL",
             "avg_bought_per_day":   "REAL",
+            "buy_order_count":      "INTEGER",
+            "sell_order_count":     "INTEGER",
+            "buy_depth_1pct":       "REAL",
+            "sell_depth_1pct":      "REAL",
+            "book_imbalance":       "REAL",
         }
         for col, typ in new_cols.items():
             if col not in existing:
@@ -148,7 +188,10 @@ def create_db(path=DB_PATH):
 def log_item(conn, item_name, data):
     item = get_item_data(item_name, data)
     conn.execute("""
-        INSERT INTO prices VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO prices VALUES (
+            NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?
+        )
     """, (
         int(time.time()),
         item_name,
@@ -165,4 +208,9 @@ def log_item(conn, item_name, data):
         item["volume_of_sellorders"],
         item["average_sold_each_day"],
         item["average_bought_each_day"],
+        item["buy_order_count"],
+        item["sell_order_count"],
+        item["buy_depth_1pct"],
+        item["sell_depth_1pct"],
+        item["book_imbalance"],
     ))
