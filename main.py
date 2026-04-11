@@ -32,7 +32,7 @@ dataupdate_thread.daemon = True
 dataupdate_thread.start()
 
 data_ready.wait() 
-print("Kör! Loggar data var 5:e minut...")
+print("Logging data every 5th minute")
 
 while True:
     time.sleep(1)
