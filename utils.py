@@ -7,7 +7,6 @@ DB_FILE = os.path.join(DB_PATH, "bazaar.db")
 
 
 def get_item_data(item, data):
-    """Extract and compute all metrics for a single bazaar item."""
     item_data = data[item]
     quick = item_data["quick_status"]
     sell_summary = item_data["sell_summary"]
@@ -21,24 +20,18 @@ def get_item_data(item, data):
             return None
 
     def weighted_avg(summary):
-        """Weighted average price across all listings in a summary.
-        Returns None if summary is empty or has zero volume,
-        so downstream code can distinguish 'no data' from 'price is 0'."""
         if not summary:
             return None
         total_cost = sum(l["pricePerUnit"] * l["amount"] for l in summary)
         total_amount = sum(l["amount"] for l in summary)
         return total_cost / total_amount if total_amount > 0 else None
 
-    # --- Core prices (straight from API) ---
-    buy_price = quick["buyPrice"]       # Highest buy order  = instasell price
-    sell_price = quick["sellPrice"]     # Lowest sell offer   = instabuy price
+    buy_price = quick["buyPrice"]
+    sell_price = quick["sellPrice"]
 
-    # --- Weighted averages (None if no order book data) ---
     avg_sell = safe(lambda: weighted_avg(sell_summary), "avg_sell_price")
     avg_buy = safe(lambda: weighted_avg(buy_summary), "avg_buy_price")
 
-    # --- Derived metrics ---
     profit_margin = safe(
         lambda: round(buy_price - sell_price, 2),
         "profit_margin"
@@ -94,14 +87,11 @@ def get_item_data(item, data):
 
 
 def create_db(path=DB_PATH):
-    """Create or connect to the bazaar database. Handles migrations and indexing."""
     os.makedirs(path, exist_ok=True)
     db_file = os.path.join(path, "bazaar.db")
 
     already_exists = os.path.exists(db_file)
     conn = sqlite3.connect(db_file)
-
-    # WAL mode: lets Grafana read while the scraper writes without locking
     conn.execute("PRAGMA journal_mode=WAL")
 
     if not already_exists:
@@ -129,7 +119,6 @@ def create_db(path=DB_PATH):
         print("Databas skapad!")
     else:
         print("Databas hittad, ansluter...")
-        # Migrate: add columns that may be missing from older schema
         existing = [row[1] for row in conn.execute("PRAGMA table_info(prices)")]
         new_cols = {
             "volume_of_buyorders":  "REAL",
@@ -143,13 +132,12 @@ def create_db(path=DB_PATH):
                 print(f"Kolumn tillagd: {col}")
         conn.commit()
 
-    # Indexes for the Grafana queries that filter on timestamp and group by item
     conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_prices_ts_item 
+        CREATE INDEX IF NOT EXISTS idx_prices_ts_item
         ON prices(timestamp, item)
     """)
     conn.execute("""
-        CREATE INDEX IF NOT EXISTS idx_prices_item_ts 
+        CREATE INDEX IF NOT EXISTS idx_prices_item_ts
         ON prices(item, timestamp)
     """)
     conn.commit()
@@ -158,8 +146,6 @@ def create_db(path=DB_PATH):
 
 
 def log_item(conn, item_name, data):
-    """Insert one item's current bazaar snapshot into the database.
-    Call conn.commit() after the full batch, not per item."""
     item = get_item_data(item_name, data)
     conn.execute("""
         INSERT INTO prices VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
