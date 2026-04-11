@@ -10,7 +10,7 @@ A real-time data scraper and logger for the Hypixel Skyblock Bazaar. Fetches liv
 - Push notifications via ntfy
 - Tracks all bazaar items automatically
 - No API key required — the Bazaar endpoint is public
-- 
+
 ---
 
 ## Data Collected Per Item
