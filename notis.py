@@ -6,6 +6,9 @@ load_dotenv()
 
 NTFY_URL = os.getenv("NTFY_URL")
 
+if not NTFY_URL:
+    print("WARNING: NTFY_URL is missing in .env")
+
 def notify(message, title="homeserver1", priority="default", tags=None):
     headers = {
         "Title": title.encode('utf-8').decode('latin-1'),
