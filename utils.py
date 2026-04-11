@@ -21,15 +21,15 @@ def get_item_data(item, data):
         except: return "Error"
 
 
-    average_sell_price            = safe_calc(lambda: average(sell_sum))
-    average_buy_price             = safe_calc(lambda: average(buy_sum))
-    spread_percent                = safe_calc(lambda: round((((average_buy_price - average_sell_price) / average_sell_price) * 100 if average_sell_price > 0 else 0), 2))
-    profit_margin                 = safe_calc(lambda: round(quick_data["buyPrice"] - quick_data["sellPrice"], 2))
-    profit_percent                = safe_calc(lambda: round(profit_margin / quick_data["sellPrice"] * 100, 2))
-    average_sold_each_day         = safe_calc(lambda: round(quick_data["sellMovingWeek"] / 7, 2))
-    average_bought_each_day       = safe_calc(lambda: round(quick_data["buyMovingWeek"] / 7, 2))
-    buy_to_sell_ratio             = safe_calc(lambda: round(quick_data["buyVolume"] / quick_data["sellVolume"], 2))
-    order_density                 = safe_calc(lambda: round(quick_data["buyOrders"] + quick_data["sellOrders"], 2))
+    average_sell_price      = safe_calc(lambda: average(sell_sum),                                                          "average_sell_price", item)
+    average_buy_price       = safe_calc(lambda: average(buy_sum),                                                           "average_buy_price", item)
+    spread_percent          = safe_calc(lambda: round((((average_buy_price - average_sell_price) / average_sell_price) * 100 if average_sell_price > 0 else 0), 2), "spread_percent", item)
+    profit_margin           = safe_calc(lambda: round(quick_data["buyPrice"] - quick_data["sellPrice"], 2),                 "profit_margin", item)
+    profit_percent          = safe_calc(lambda: round(profit_margin / quick_data["sellPrice"] * 100, 2),                    "profit_percent", item)
+    average_sold_each_day   = safe_calc(lambda: round(quick_data["sellMovingWeek"] / 7, 2),                                 "average_sold_each_day", item)
+    average_bought_each_day = safe_calc(lambda: round(quick_data["buyMovingWeek"] / 7, 2),                                  "average_bought_each_day", item)
+    buy_to_sell_ratio       = safe_calc(lambda: round(quick_data["buyVolume"] / quick_data["sellVolume"], 2),               "buy_to_sell_ratio", item)
+    order_density           = safe_calc(lambda: round(quick_data["buyOrders"] + quick_data["sellOrders"], 2),               "order_density", item)
 
     return {
         # -----------Normal-Data----------- # 
